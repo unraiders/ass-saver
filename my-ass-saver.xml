@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>ass-saver</Name>
+  <Repository>unraiders/ass-saver</Repository>
+  <Registry>https://hub.docker.com/r/unraiders/ass-saver/</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://hub.docker.com/unraiders/ass-saver</Support>
+  <Icon>https://raw.githubusercontent.com/unraiders/ass-saver/master/imagenes/ass-saver.png</Icon>
+  <Overview>
+    Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias.
+  </Overview>
+  <Category>Tools:</Category>
+  <Config Name="FRONTEND" Target="3000" Default="3000" Mode="tcp" Description="Puerto frontend app" Type="Port" Display="always" Required="true" Mask="false"/>
+  <Config Name="BACKEND" Target="8000" Default="8000" Mode="tcp" Description="Puerto backtend app" Type="Port" Display="always" Required="true" Mask="false"/>  
+</Container>

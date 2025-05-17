@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# Allow only specific files
+!requirements.txt
+!.web/*
+!rxconfig.py
+!ass_saver/
+!assets/

@@ -1,0 +1,9 @@
+services:
+  ass-saver:
+    image: unraiders/ass-saver
+    container_name: ass-saver
+    ports:
+      - 3000:3000
+      - 8000:8000
+    network_mode: bridge
+    restart: unless-stopped
