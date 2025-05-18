@@ -3,7 +3,12 @@ import reflex as rx
 from reflex.style import set_color_mode
 
 from .views.navbar import navbar
+from .views.footer import footer    
 from .views.stats import State
+
+
+def scroll_to_bottom():
+    return rx.call_script("window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });")
 
 
 def index():
@@ -165,6 +170,7 @@ def index():
                 width="100%",
                 radius="large",
             ),
+            
             rx.cond(
                 State.error,
                 rx.text(State.error, color="red"),
@@ -183,14 +189,17 @@ def index():
                     width="100%",
                 ),
             ),
+            rx.center(
+                footer(),
+                width="100%"
+            ),
             width="100%",
             max_width="500px",
             spacing="4",
             padding="2em",
             id="result",
         ),
-        align="center",
-    )
+    ),
 
 app = rx.App()
 app.add_page(index)

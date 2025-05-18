@@ -7,7 +7,6 @@ import math
 
 from reflex.style import set_color_mode
 
-
 class State(rx.State):
     """El estado de la aplicación."""
     image: str = ""
@@ -99,7 +98,7 @@ class State(rx.State):
     def set_text_angle(self, value: int):
         """Actualiza el ángulo de rotación del texto."""
         self.text_angle = value
-
+    
     def apply_watermark(self):
         """Aplica la marca de agua a la imagen."""
         if not self.image or not self.watermark_text:
@@ -257,8 +256,10 @@ class State(rx.State):
             img_str = base64.b64encode(buffered.getvalue()).decode()
             self.result_image = f"data:image/png;base64,{img_str}"
             self.error = ""
-            # Mostrar notificación de éxito
+
             yield rx.toast.success("¡Marca de agua aplicada con éxito!, solo necesitas descargarla para salvar tú culo!!")
+                
+            yield rx.scroll_to("final")
             
         except Exception as e:
             self.error = f"Error al procesar la imagen: {str(e)}"

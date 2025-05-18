@@ -31,6 +31,6 @@ def navbar():
         z_index="999",
         bg="var(--background)",
         backdrop_filter="blur(5px)",
-        padding="1em",
-        border_bottom="1px solid var(--gray-6)",
+        padding="0.5em 0 0 0",
+        #border_bottom="1px solid var(--gray-6)",
     )
