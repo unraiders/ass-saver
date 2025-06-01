@@ -1,19 +1,23 @@
-FROM python:3.13-slim
+FROM node:20-slim
 
 LABEL maintainer="unraiders"
 LABEL description="Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias."
 
-ARG VERSION=0.0.5
+ARG VERSION=0.0.6
 ENV VERSION=${VERSION}
 
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    python3-full \
     curl \
     git \
     unzip \  
     build-essential \
     libffi-dev \
-    python3-dev \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
@@ -21,6 +25,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Crear y activar un entorno virtual
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
