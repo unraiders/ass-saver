@@ -151,14 +151,30 @@ class State(rx.State):
                       font=font, fill=(color_value, color_value, color_value, 255))
                 txt_template = txt_template.rotate(angle, expand=True)
                 
-                for row in range(-1, rows + 1):
-                    for col in range(-1, cols + 1):
-                        x = col * spacing_x
-                        y = row * spacing_y
+                # Ajustar el espaciado según el ángulo para evitar superposición
+                adjusted_spacing_x = spacing_x
+                adjusted_spacing_y = spacing_y
+                
+                # Para ángulos cercanos a 90º, ajustar el espaciado horizontal y vertical
+                if abs(angle) % 180 > 75 and abs(angle) % 180 < 105:
+                    # Cuando el texto está vertical o casi vertical, necesitamos más espaciado horizontal
+                    adjusted_spacing_x = text_height * 2.5  # Reducir para texto vertical
+                    adjusted_spacing_y = text_width * 1.2  # Usar ancho para espaciado vertical
+                    rows = int(image.height / adjusted_spacing_y) + 4  # Más filas
+                    cols = int(image.width / adjusted_spacing_x) + 4  # Más columnas
+                
+                # Calcular el área total a cubrir para asegurar que no queden espacios vacíos
+                x_range = range(-2, cols + 3)  # Extender el rango para mejor cobertura
+                y_range = range(-2, rows + 3)  # Extender el rango para mejor cobertura
+                
+                for row in y_range:
+                    for col in x_range:
+                        x = col * adjusted_spacing_x
+                        y = row * adjusted_spacing_y
                         
                         # Alternar filas para crear patrón diagonal
                         if row % 2 == 0:
-                            x += spacing_x / 2
+                            x += adjusted_spacing_x / 2
                         
                         # Pegar solo si está dentro de los límites de la imagen
                         paste_x = int(x)
@@ -167,40 +183,60 @@ class State(rx.State):
                             image.paste(txt_template, (paste_x, paste_y), txt_template)
                             
             elif self.watermark_type == "Texto ondulado":
-                # Crear patrón ondulado
-                spacing = text_height * 1.5
-                frequency = 0.05
-                amplitude = text_height * 0.5
-                offset = -diagonal
-                while offset < diagonal:
-                    for i in range(-rows, rows):
-                        base_x = offset + i * spacing
-                        base_y = i * spacing
+                # Crear verdadero patrón sinusoidal con textos siguiendo la onda
+                
+                # Parámetros para ondas más definidas y visibles
+                wave_spacing_y = text_height * 8.0  # Gran espaciado vertical entre ondas
+                frequency = 0.005  # Frecuencia controlada para ondas visibles pero no muy apretadas
+                amplitude = text_height * 10.0  # Amplitud grande para ondas muy visibles
+                
+                # Calcular cantidad de ondas para cubrir la imagen
+                num_waves = max(3, int(image.height / (wave_spacing_y + amplitude * 2))) + 1
+                
+                # Cálculo de espaciado horizontal basado en la frecuencia para evitar superposiciones
+                # Queremos que haya aproximadamente un texto cada 30-40 grados de la onda
+                period = 2 * math.pi / frequency  # Longitud de una onda completa en píxeles
+                wave_spacing_x = period / 10  # 10 textos por onda completa
+                
+                # Crear ondas horizontales a través de la imagen
+                for wave_idx in range(num_waves):
+                    # Punto base de la onda - distribuido para cubrir toda la altura de la imagen
+                    wave_y_base = wave_idx * wave_spacing_y + image.height / (num_waves * 1.5)
+                    
+                    # Fase alternada para líneas consecutivas - crea un efecto más natural
+                    phase_offset = (wave_idx % 2) * math.pi
+                    
+                    # Número de textos a lo largo de la onda
+                    num_texts = int(image.width / wave_spacing_x) + 8  # +8 para asegurar cobertura
+                    
+                    # Crear textos que sigan la forma sinusoidal
+                    for i in range(-3, num_texts + 3):  # Extender fuera de los límites para mejor cobertura
+                        x_pos = i * wave_spacing_x
                         
-                        # Aplicar efecto ondulado
-                        wave_offset = amplitude * math.sin(frequency * base_x)
-                        x = base_x
-                        y = base_y + wave_offset
+                        # Calcular posición Y siguiendo una onda sinusoidal perfecta
+                        wave_y = wave_y_base + amplitude * math.sin(frequency * x_pos + phase_offset)
                         
-                        # Calcular el ángulo de rotación basado en la onda
-                        angle = math.degrees(math.atan(
-                            amplitude * frequency * math.cos(frequency * base_x)
-                        ))
+                        # Calcular el ángulo tangente a la curva en este punto para rotar el texto
+                        # La derivada de sin(ax) es a*cos(ax)
+                        derivative = amplitude * frequency * math.cos(frequency * x_pos + phase_offset)
+                        angle = math.degrees(math.atan(derivative))
                         
-                        # Rotar el texto según el ángulo
+                        # Crear imagen con texto
                         txt = Image.new('RGBA', (int(text_width*1.5), int(text_height*1.5)), (255, 255, 255, 0))
                         d = ImageDraw.Draw(txt)
                         d.text((text_width/4, text_height/4), self.watermark_text, 
                               font=font, fill=(color_value, color_value, color_value, 255))
+                        
+                        # Rotar el texto para seguir la tangente a la curva en ese punto
                         txt = txt.rotate(angle, expand=True)
                         
                         # Pegar solo si está dentro de los límites de la imagen
-                        paste_x = int(x)
-                        paste_y = int(y)
+                        paste_x = int(x_pos)
+                        paste_y = int(wave_y)
+                        
+                        # Verificar que está dentro de los límites para evitar errores
                         if (0 <= paste_x < image.width and 0 <= paste_y < image.height):
                             image.paste(txt, (paste_x, paste_y), txt)
-                    
-                    offset += spacing * 2
                     
             else:  # Texto espiral
                 # Crear patrón en espiral
