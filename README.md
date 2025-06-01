@@ -22,7 +22,7 @@ La aplicación no guarda ningún dato en local, todo el proceso se realiza en me
 
 Este mini proyecto está realizado con el framework Reflex de Python, este framework por su envergadura igual no sería el idóneo para este proyecto de prueba tan simple, por lo que quiere decir que al levantar el contenedor necesita un tiempo en levantar todos los servicios, dale su tiempo... siéntete libre de descargarlo y modificarlo a tú gusto o simplemente para hacer pruebas. 
 
-Este proyecto tiene una parte frontend y una parte backend, por eso en el docker compose se exponen dos puertos, en este caso el frontend en el 3000 y el backend en el 8000.
+Este proyecto tiene una parte frontend y una parte backend, por eso en el docker compose se exponen dos puertos, en este caso el frontend en el 3030 y el backend en el 8030.
 
 ```
 services:
@@ -30,43 +30,31 @@ services:
     image: unraiders/ass-saver
     container_name: ass-saver
     ports:
-      - 3000:3000
-      - 8000:8000
+      - 3030:3030
+      - 8030:8030
     network_mode: bridge
     restart: unless-stopped
 ```
-Si quieres exponer el contenedor para que sea accesible desde el exterior de tu red, en el caso de NPM (Nginx Proxy Manager) a la hora de crear el registro del Proxy Host hay que hacer uso de Custom Locations, en este caso crearemos 2, quedando así:
+Si quieres exponer el contenedor para que sea accesible desde el exterior de tu red, en el caso de NPM (Nginx Proxy Manager) a la hora de crear el registro del Proxy Host hay que hacer uso de Custom Locations, en este caso crearemos uno, quedando así:
 
 ```
 Define location:
 location: /_event
 Scheme: http
 Forward Hostname / IP: La IP dónde está instalado el contenedor.
-Forward Port: 8000
+Forward Port: 8030
 En el campo de texto escribir lo siguiente:
 location /_event {
-     proxy_pass http://<ip_contenedor>:8000;
+     proxy_pass http://<ip_contenedor>:8030;
      proxy_http_version 1.1;
      proxy_set_header Upgrade $http_upgrade;
      proxy_set_header Connection "upgrade";
 }
 ```
-
-```
-Define location:
-location: /_upload
-Scheme: http
-Forward Hostname / IP: <ip_contenedor> La IP dónde está instalado el contenedor.
-Forward Port: 8000
-En el campo de texto escribir lo siguiente:
-location /_upload {
-     proxy_pass http://<ip_contenedor>:8000;
-     proxy_http_version 1.1;
-     proxy_set_header Upgrade $http_upgrade;
-     proxy_set_header Connection "upgrade";
-}
-```
+---
 
 Demo: [https://ass-saver.marcallao.com](https://ass-saver.marcallao.com)
+
+---
 
 

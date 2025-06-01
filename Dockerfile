@@ -1,9 +1,9 @@
-FROM node:20-slim
+FROM node:23-slim
 
 LABEL maintainer="unraiders"
 LABEL description="Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias."
 
-ARG VERSION=0.0.6
+ARG VERSION=0.0.8
 ENV VERSION=${VERSION}
 
 # Instalar dependencias necesarias
@@ -38,7 +38,7 @@ COPY assets/ assets/
 COPY rxconfig.py .
 COPY .web/_static .web/_static
 
-EXPOSE 3000
-EXPOSE 8000
+EXPOSE 3030
+EXPOSE 8030
 
-CMD ["reflex", "run", "--env", "prod", "--backend-host", "0.0.0.0"]
+CMD ["reflex", "run", "--env", "prod", "--frontend-port", "3030", "--backend-port", "8030", "--backend-host", "0.0.0.0"]
