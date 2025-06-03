@@ -115,6 +115,23 @@ def index():
                 margin_bottom="1em",
             ),
             
+            # Radio group para el modo de color
+            rx.vstack(
+                rx.text("Modo de color:", margin_bottom="0.5em"),
+                rx.radio_group(
+                    [
+                        "Actual",
+                        "Escala de grises",
+                    ],
+                    value=State.color_mode,
+                    on_change=State.set_color_mode,
+                    color_scheme="pink",
+                ),
+                align_items="start",
+                margin_y="1em",
+                width="100%",
+            ),
+            
             # Añadir los radio groups aquí
             rx.vstack(
                 rx.text("Tipo de disposición de la marca de agua:", margin_bottom="0.5em"),

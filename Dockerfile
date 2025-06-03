@@ -3,7 +3,7 @@ FROM node:23-slim
 LABEL maintainer="unraiders"
 LABEL description="Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias."
 
-ARG VERSION=0.0.8
+ARG VERSION=0.0.9
 ENV VERSION=${VERSION}
 
 # Instalar dependencias necesarias

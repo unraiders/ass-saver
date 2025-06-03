@@ -18,6 +18,7 @@ class State(rx.State):
     opacity: int = 125  # Valor inicial de opacidad (0-255)
     watermark_type: str = "Texto lineal"  # Tipo de disposición (lineal, ondulado, espiral)
     text_angle: int = 0  # Ángulo de rotación para texto lineal
+    color_mode: str = "Actual"  # Modo de color (Actual o Escala de grises)
 
     async def load_test_file(self):
         """Carga el archivo de prueba dni_ficticio.jpg."""
@@ -87,6 +88,10 @@ class State(rx.State):
         self.opacity = int(value[0])
         # Limpiar la imagen procesada para forzar reprocesamiento
         # self.result_image = ""
+        
+    def set_watermark_text(self, value: str):
+        """Actualiza el texto de la marca de agua."""
+        self.watermark_text = value
 
     def set_watermark_type(self, value: str):
         """Actualiza el tipo de marca de agua."""
@@ -98,6 +103,10 @@ class State(rx.State):
     def set_text_angle(self, value: int):
         """Actualiza el ángulo de rotación del texto."""
         self.text_angle = value
+    
+    def set_color_mode(self, value: str):
+        """Actualiza el modo de color de la imagen."""
+        self.color_mode = value
     
     def apply_watermark(self):
         """Aplica la marca de agua a la imagen."""
@@ -279,6 +288,10 @@ class State(rx.State):
             else:
                 background.paste(image)
             
+            # Convertir a escala de grises si es necesario
+            if self.color_mode == "Escala de grises":
+                background = background.convert('L').convert('RGB')
+            
             # Convertir a RGB y guardar como PNG
             if background.mode != 'RGB':
                 background = background.convert('RGB')
@@ -309,3 +322,4 @@ class State(rx.State):
         self.result_image = ""
         self.error = ""
         self.is_processing = False
+        self.color_mode = "Actual"
