@@ -16,7 +16,7 @@ class State(rx.State):
     error: str = ""
     font_size: int = 16  # Tamaño inicial de la fuente
     opacity: int = 125  # Valor inicial de opacidad (0-255)
-    watermark_type: str = "Texto lineal"  # Tipo de disposición (lineal, ondulado, espiral)
+    watermark_type: str = "Texto lineal"  # Tipo de disposición (lineal, cruzado)
     text_angle: int = 0  # Ángulo de rotación para texto lineal
     color_mode: str = "Actual"  # Modo de color (Actual o Escala de grises)
 
@@ -191,7 +191,7 @@ class State(rx.State):
                         if (0 <= paste_x < image.width and 0 <= paste_y < image.height):
                             image.paste(txt_template, (paste_x, paste_y), txt_template)
                             
-            elif self.watermark_type == "Texto ondulado":
+            elif self.watermark_type == "Texto cruzado":
                 # Crear verdadero patrón sinusoidal con textos siguiendo la onda
                 
                 # Parámetros para ondas más definidas y visibles
@@ -246,38 +246,6 @@ class State(rx.State):
                         # Verificar que está dentro de los límites para evitar errores
                         if (0 <= paste_x < image.width and 0 <= paste_y < image.height):
                             image.paste(txt, (paste_x, paste_y), txt)
-                    
-            else:  # Texto espiral
-                # Crear patrón en espiral
-                center_x = image.width / 2
-                center_y = image.height / 2
-                spacing = text_height
-                max_radius = math.sqrt((image.width/2)**2 + (image.height/2)**2)
-                angle_step = 15
-                radius_step = text_height * 0.5
-                current_angle = 0
-                current_radius = text_height
-                
-                while current_radius < max_radius:
-                    x = center_x + current_radius * math.cos(math.radians(current_angle))
-                    y = center_y + current_radius * math.sin(math.radians(current_angle))
-                    
-                    # Rotar el texto según el ángulo de la espiral
-                    txt = Image.new('RGBA', (int(text_width*1.5), int(text_height*1.5)), (255, 255, 255, 0))
-                    d = ImageDraw.Draw(txt)
-                    d.text((text_width/4, text_height/4), self.watermark_text, 
-                          font=font, fill=(color_value, color_value, color_value, 255))
-                    rotation_angle = current_angle + 90
-                    txt = txt.rotate(rotation_angle, expand=True)
-                    
-                    # Pegar solo si está dentro de los límites de la imagen
-                    paste_x = int(x - text_width/2)
-                    paste_y = int(y - text_height/2)
-                    if (0 <= paste_x < image.width and 0 <= paste_y < image.height):
-                        image.paste(txt, (paste_x, paste_y), txt)
-                    
-                    current_angle += angle_step
-                    current_radius += radius_step / (2 * math.pi)
             
             # Crear un fondo blanco
             background = Image.new('RGB', image.size, (255, 255, 255))

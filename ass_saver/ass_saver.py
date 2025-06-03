@@ -138,8 +138,7 @@ def index():
                 rx.radio_group(
                     [
                         "Texto lineal",
-                        "Texto ondulado",
-                        "Texto espiral",
+                        "Texto cruzado",
                     ],
                     value=State.watermark_type,
                     on_change=State.set_watermark_type,

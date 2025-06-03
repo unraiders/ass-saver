@@ -10,13 +10,11 @@ Este proyecto está en fase experimental pero funcional parcialmente, posiblemen
 
 Que funciona:
 
--  Texto lineal en inclinación de 0º, 45º, 90º, 180º.
+- Texto lineal en inclinación de 0º, 45º, 90º, 180º.
 
-Que no funciona:
+- Opción de Modo de color: Actual o Escala de grises. 
 
-- Texto ondulado: El texto ondulado a pesar de no ser ondulado igual podría servir en determinadas ocasiones de texto que se pueda entrelazar.
-
-- Texto espiral: Totalmente ilegible.
+- Texto cruzado: El texto cruzado podría servir en determinadas ocasiones para texto que se pueda entrelazar.
 
 La aplicación no guarda ningún dato en local, todo el proceso se realiza en memoria, lo que si nos permite es descargar el documento una vez insertada la marca de agua.
 
