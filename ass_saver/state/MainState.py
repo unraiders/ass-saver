@@ -2,12 +2,10 @@ import reflex as rx
 from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
-import typing
 import math
 
-from reflex.style import set_color_mode
 
-class State(rx.State):
+class MainState(rx.State):
     """El estado de la aplicación."""
     image: str = ""
     watermark_text: str = ""
@@ -49,7 +47,9 @@ class State(rx.State):
         except ValueError:
             self.text_angle = 45  # valor por defecto si hay error
 
-    def handle_upload(self, files: typing.Any):
+    async def handle_upload(
+        self, files: list[rx.UploadFile]
+        ):
         """Maneja la subida de archivos."""
         if not files:
             return
@@ -58,7 +58,7 @@ class State(rx.State):
             file = files[0]
             # Convertir el objeto UploadFile a base64
             if hasattr(file, "read"):
-                file_bytes = file.read()
+                file_bytes = await file.read()
             else:
                 file_bytes = file
                 

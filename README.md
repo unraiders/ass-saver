@@ -4,9 +4,9 @@ Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para protege
 
 Está especialmente indicado para poner una marca de agua en nuestro documento nacional de identidad (DNI), cuando por alguna razón tenemos que enviarlo a terceros (altas, bajas, etc.) y queremos especificar el motivo de dicha gestión y que quede reflejado en el documento. 
 
-## Versión inicial en desarrollo.
+## Versión inicial.
 
-Este proyecto está en fase experimental pero funcional parcialmente, posiblemente con la funcionalidad de texto lineal ya sea suficiente para un uso general y posiblemente no tengas más versiones ni cambios en el código.
+Este proyecto está en fase experimental pero funcional, posiblemente con la funcionalidad de texto lineal ya sea suficiente para un uso general y posiblemente no tengas más versiones ni cambios en el código.
 
 Que funciona:
 
@@ -18,9 +18,16 @@ Que funciona:
 
 La aplicación no guarda ningún dato en local, todo el proceso se realiza en memoria, lo que si nos permite es descargar el documento una vez insertada la marca de agua.
 
-Este mini proyecto está realizado con el framework Reflex de Python, este framework por su envergadura igual no sería el idóneo para este proyecto de prueba tan simple, por lo que quiere decir que al levantar el contenedor necesita un tiempo en levantar todos los servicios, dale su tiempo... siéntete libre de descargarlo y modificarlo a tú gusto o simplemente para hacer pruebas. 
+---
 
-Este proyecto tiene una parte frontend y una parte backend, por eso en el docker compose se exponen dos puertos, en este caso el frontend en el 3030 y el backend en el 8030.
+Este miniproyecto está realizado con el framework Reflex de Python, este framework por su envergadura igual no sería el idóneo para este tipo de proyectos de prueba tan simple, es un framework de Python mas enfocado en tener el frontend y el backend separados, por lo que quiere decir que, al levantar el contenedor todo en local y tener que compilar el frontend necesitará tener los puertos definidos para su comunicación con el backend, en este caso el puerto 25501 quedará asignado, si en algún momento Reflex permite cambiar el puerto host del contenedor después de la generación de la imagen Docker cambiaré el código para admitir esa característica.
+ 
+---
+
+  > [!IMPORTANT]
+  > Dado que la exportación del frontend se realiza en la compilación de la imagen de momento no podemos cambiar el puerto host y siempre tendrá que trabajar en el 25501 para que funcione el backend instalado en la misma imagen, o sea, no cambiar la asignación de los puertos de 25501:25501.
+
+---
 
 ```
 services:
@@ -28,8 +35,7 @@ services:
     image: unraiders/ass-saver
     container_name: ass-saver
     ports:
-      - 3030:3030
-      - 8030:8030
+      - 25501:25501
     network_mode: bridge
     restart: unless-stopped
 ```
@@ -40,10 +46,10 @@ Define location:
 location: /_event
 Scheme: http
 Forward Hostname / IP: La IP dónde está instalado el contenedor.
-Forward Port: 8030
+Forward Port: 25501
 En el campo de texto escribir lo siguiente:
 location /_event {
-     proxy_pass http://<ip_contenedor>:8030;
+     proxy_pass http://<ip_contenedor>:25501;
      proxy_http_version 1.1;
      proxy_set_header Upgrade $http_upgrade;
      proxy_set_header Connection "upgrade";

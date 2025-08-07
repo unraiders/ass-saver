@@ -2,14 +2,13 @@ import reflex as rx
 
 from reflex.style import set_color_mode
 
-from .views.navbar import navbar
-from .views.footer import footer    
-from .views.stats import State
+from ass_saver.views.navbar import navbar
+from ass_saver.views.footer import footer    
+from ass_saver.state.MainState import MainState
 
 
 def scroll_to_bottom():
     return rx.call_script("window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });")
-
 
 def index():
     return rx.center(
@@ -19,8 +18,7 @@ def index():
                 rx.heading("La marca de agua en tus imágenes (png, jpg)", size="2"),
                 rx.button(
                     "Limpiar",
-                    on_click=State.reset_state,
-                    color_scheme="brown",
+                    on_click=MainState.reset_state,
                     size="1",
                 ),
                 width="100%",
@@ -36,8 +34,6 @@ def index():
                             ),
                         rx.button(
                             "Seleccionar Archivo", 
-                            color_scheme="indigo",
-                            radius="large",
                             align="center", 
                             ),
                             align="center", 
@@ -45,12 +41,19 @@ def index():
                     border="2px dashed",
                     padding="4em",
                     border_radius="md",
-                    on_drop=State.handle_upload,
+                    id="upload1",
+                    on_drop=MainState.handle_upload(
+                        rx.upload_files(upload_id="upload1")
+                    ),
+                    multiple=False,
+                    accept={
+                        "image/png": [".png"],
+                        "image/jpeg": [".jpg", ".jpeg"],
+                    },
                 ),
                 rx.badge(
                     "Cargar fichero de prueba",
-                    on_click=State.load_test_file,
-                    color_scheme="indigo",
+                    on_click=MainState.load_test_file,
                     variant="surface",
                     cursor="pointer",
                     margin_top="1em",
@@ -59,9 +62,9 @@ def index():
                 width="100%",
             ),
             rx.cond(
-                State.image,
+                MainState.image,
                 rx.vstack(
-                    rx.image(src=State.image, max_width="400px", margin_y="1em"),
+                    rx.image(src=MainState.image, max_width="400px", margin_y="1em"),
                     align="center",
                     width="100%",
                 ),
@@ -69,11 +72,9 @@ def index():
 
             rx.input(
                 placeholder="Texto para la marca de agua",
-                value=State.watermark_text,
-                on_change=State.set_watermark_text,
+                value=MainState.watermark_text,
+                on_change=MainState.set_watermark_text,
                 size="2",
-                color_scheme="pink",                
-                radius="large",
                 margin_y="1em",
                 width="100%",
             ),
@@ -81,7 +82,7 @@ def index():
                 "Ejemplo: SOLO VÁLIDO PARA DAR DE BAJA MOVISTAR LA LIGA.",
                 size="1",
                 weight="light",
-                color_scheme="cyan",
+                color_scheme="brown",
                 color="gray.500",
                 margin_top="-1em",
                 margin_bottom="1em",
@@ -91,13 +92,12 @@ def index():
                 min=10,
                 max=100,
                 step=2,
-                on_change=State.set_font_size,
-                color_scheme="pink",
+                on_change=MainState.set_font_size,
                 margin_y="1em",
                 width="100%",
             ),
             rx.text(
-                f"Tamaño de fuente: {State.font_size}",
+                f"Tamaño de fuente: {MainState.font_size}",
                 margin_bottom="1em",
             ),
             rx.slider(
@@ -105,13 +105,12 @@ def index():
                 min=0,
                 max=255,
                 step=5,
-                on_change=State.set_opacity,
-                color_scheme="pink",
+                on_change=MainState.set_opacity,
                 margin_y="1em",
                 width="100%",
             ),
             rx.text(
-                f"Opacidad: {State.opacity}",
+                f"Opacidad: {MainState.opacity}",
                 margin_bottom="1em",
             ),
             
@@ -123,9 +122,8 @@ def index():
                         "Actual",
                         "Escala de grises",
                     ],
-                    value=State.color_mode,
-                    on_change=State.set_color_mode,
-                    color_scheme="pink",
+                    value=MainState.color_mode,
+                    on_change=MainState.set_color_mode,
                 ),
                 align_items="start",
                 margin_y="1em",
@@ -140,9 +138,8 @@ def index():
                         "Texto lineal",
                         "Texto cruzado",
                     ],
-                    value=State.watermark_type,
-                    on_change=State.set_watermark_type,
-                    color_scheme="pink",
+                    value=MainState.watermark_type,
+                    on_change=MainState.set_watermark_type,
                 ),
                 align_items="start",
                 margin_y="1em",
@@ -159,16 +156,15 @@ def index():
                         "90°",
                         "180°",
                     ],
-                    value=f"{State.text_angle}°",
-                    on_change=State.set_text_angle_from_string,
-                    color_scheme="pink",
+                    value=f"{MainState.text_angle}°",
+                    on_change=MainState.set_text_angle_from_string,
                     is_disabled=rx.cond(
-                        State.watermark_type == "Texto lineal",
+                        MainState.watermark_type == "Texto lineal",
                         False,
                         True,
                     ),
                     opacity=rx.cond(
-                        State.watermark_type == "Texto lineal",
+                        MainState.watermark_type == "Texto lineal",
                         "1",
                         "0.5",
                     ),
@@ -180,26 +176,23 @@ def index():
             
             rx.button(
                 "Aplicar Marca de Agua",
-                on_click=State.apply_watermark,
-                is_loading=State.is_processing,
-                color_scheme="indigo",
+                on_click=MainState.apply_watermark,
+                is_loading=MainState.is_processing,
                 width="100%",
-                radius="large",
             ),
             
             rx.cond(
-                State.error,
-                rx.text(State.error, color="red"),
+                MainState.error,
+                rx.text(MainState.error, color="red"),
             ),
             rx.cond(
-                State.result_image,
+                MainState.result_image,
                 rx.vstack(
-                    rx.image(src=State.result_image, max_width="400px", margin_y="1em", align="center"),
+                    rx.image(src=MainState.result_image, max_width="400px", margin_y="1em", align="center"),
                     rx.button(
                         "Descargar Imagen",
-                        color_scheme="green",
                         width="100%",
-                        on_click=rx.download(url=State.result_image, filename="save-your-ass_watermarked.png"),
+                        on_click=rx.download(url=MainState.result_image, filename="save-your-ass_watermarked.png"),
                     ),
                     align="center",
                     width="100%",
@@ -217,5 +210,12 @@ def index():
         ),
     ),
 
-app = rx.App()
+app = rx.App(
+    theme=rx.theme(
+        accent_color="brown", 
+        gray_color="slate", 
+        appearance="dark", 
+        radius="full"
+    )
+)
 app.add_page(index)

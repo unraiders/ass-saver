@@ -1,2 +1,2 @@
-reflex==0.7.14
-pillow==11.2.1
+reflex==0.8.5
+pillow==11.3.0

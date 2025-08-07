@@ -10,7 +10,7 @@ def navbar():
                 rx.heading("Save your ass - Selfhosted", size="6"),
                 radius="large",
                 align="center",
-                color_scheme="pink",
+                #color_scheme="pink",
                 variant="surface",
                 padding="0.65rem",
             ),
@@ -32,5 +32,4 @@ def navbar():
         bg="var(--background)",
         backdrop_filter="blur(5px)",
         padding="0.5em 0 0 0",
-        #border_bottom="1px solid var(--gray-6)",
     )

@@ -12,6 +12,5 @@
     Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias.
   </Overview>
   <Category>Tools:</Category>
-  <Config Name="FRONTEND" Target="3030" Default="3030" Mode="tcp" Description="Puerto frontend app" Type="Port" Display="always" Required="true" Mask="false"/>
-  <Config Name="BACKEND" Target="8030" Default="8030" Mode="tcp" Description="Puerto backtend app" Type="Port" Display="always" Required="true" Mask="false"/>  
+  <Config Name="FRONTEND" Target="25501" Default="25501" Mode="tcp" Description="Puerto webapp" Type="Port" Display="always" Required="true" Mask="false"/>
 </Container>

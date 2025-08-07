@@ -2,8 +2,17 @@
 *
 
 # Allow only specific files
-!requirements.txt
-!.web/*
 !rxconfig.py
-!ass_saver/
-!assets/
+!requirements.txt
+!Caddyfile
+!entrypoint.sh
+!ass_saver/views/__init__.py
+!ass_saver/views/footer.py
+!ass_saver/views/navbar.py
+!ass_saver/state/__init__.py
+!ass_saver/state/MainState.py
+!ass_saver/utils/__init__.py
+!ass_saver/utils/config.py
+!ass_saver/__init__.py
+!ass_saver/ass_saver.py
+!assets/*

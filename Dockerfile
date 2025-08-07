@@ -1,44 +1,69 @@
-FROM node:23-slim
+# Etapa de build
+FROM alpine:3.21.3 AS builder
 
-LABEL maintainer="unraiders"
-LABEL description="Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias."
+ARG VERSION=0.1.0
+ARG PORT=25501
+ARG API_URL
 
-ARG VERSION=0.0.10
-ENV VERSION=${VERSION}
-
-# Instalar dependencias necesarias
-RUN apt-get update && apt-get install -y \
+RUN apk update && apk add --no-cache \
     python3 \
-    python3-pip \
-    python3-dev \
-    python3-venv \
-    python3-full \
+    py3-pip \
     curl \
+    bash \
+    nodejs \
+    npm \
     git \
-    unzip \  
-    build-essential \
-    libffi-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libpng-dev \
-    fonts-dejavu-core \
-    && rm -rf /var/lib/apt/lists/*
+    build-base
 
 WORKDIR /app
 
-# Crear y activar un entorno virtual
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+COPY requirements.txt .
+RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
+
+COPY rxconfig.py ./
+RUN reflex init
+
+COPY . .
+
+RUN REFLEX_API_URL=${API_URL:-http://localhost:$PORT} reflex export --loglevel debug --frontend-only --no-zip \
+    && mv .web/build/client/* /srv/ \
+    && rm -rf .web
+
+# Etapa final
+FROM alpine:3.21.3
+
+ARG VERSION
+ARG PORT=25501
+ARG API_URL
+
+RUN apk update && apk add --no-cache \
+    python3 \
+    py3-pip \
+    caddy 
+
+WORKDIR /app
+
+COPY Caddyfile .
+COPY rxconfig.py .
+COPY entrypoint.sh .
+COPY ass_saver ./ass_saver
+COPY assets ./assets
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
 
-COPY ass_saver/ ass_saver/
-COPY assets/ assets/
-COPY rxconfig.py .
-COPY .web/_static .web/_static
+ENV PORT=$PORT
+ENV REFLEX_API_URL=${API_URL:-http://localhost:$PORT}
+ENV PYTHONUNBUFFERED=1
+ENV VERSION=${VERSION}
 
-EXPOSE 3030
-EXPOSE 8030
+COPY --from=builder /srv /srv
 
-CMD ["reflex", "run", "--env", "prod", "--frontend-port", "3030", "--backend-port", "8030", "--backend-host", "0.0.0.0"]
+STOPSIGNAL SIGKILL
+
+EXPOSE $PORT
+
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]
