@@ -54,6 +54,7 @@ RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
 
 ENV PORT=$PORT
 ENV REFLEX_API_URL=${API_URL:-http://localhost:$PORT}
+ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV VERSION=${VERSION}
 

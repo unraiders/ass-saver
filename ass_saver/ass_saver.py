@@ -2,9 +2,9 @@ import reflex as rx
 
 from reflex.style import set_color_mode
 
-from .views.navbar import navbar
-from .views.footer import footer    
-from .state.MainState import MainState
+from ass_saver.views.navbar import navbar
+from ass_saver.views.footer import footer    
+from ass_saver.state.MainState import MainState
 
 
 def scroll_to_bottom():
