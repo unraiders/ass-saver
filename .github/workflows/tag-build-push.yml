@@ -74,5 +74,5 @@ jobs:
           build-args: |
               VERSION=${{ steps.get_version.outputs.version }}
           tags: |
-              unraiders/ass_saver:${{ steps.get_version.outputs.version }}
-              ${{ steps.check_version.outputs.is_semantic == 'true' && 'unraiders/ass_saver:latest' || '' }}
+              unraiders/ass-saver:${{ steps.get_version.outputs.version }}
+              ${{ steps.check_version.outputs.is_semantic == 'true' && 'unraiders/ass-saver:latest' || '' }}
