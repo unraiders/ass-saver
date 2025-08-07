@@ -33,9 +33,17 @@ def index():
                             align="center",                            
                             ),
                         rx.button(
-                            "Seleccionar Archivo", 
-                            align="center", 
+                            rx.cond(
+                                MainState.is_loading_file,
+                                rx.hstack(
+                                    rx.spinner(),
+                                    rx.text("Cargando Archivo..")
+                                ),
+                                "Seleccionar Archivo",
                             ),
+                            is_loading=MainState.is_loading_file,
+                            disabled=MainState.is_loading_file
+                        ),                        
                             align="center", 
                     ),
                     border="2px dashed",
@@ -173,14 +181,21 @@ def index():
                 margin_y="1em",
                 width="100%",
             ),
-            
+
             rx.button(
-                "Aplicar Marca de Agua",
+                rx.cond(
+                    MainState.is_loading_watermark,
+                    rx.hstack(
+                        rx.spinner(),
+                        rx.text("Aplicando Marca de Agua...")
+                    ),
+                    "Aplicar Marca de Agua"
+                ),
                 on_click=MainState.apply_watermark,
-                is_loading=MainState.is_processing,
+                disabled=MainState.is_loading_watermark,
                 width="100%",
             ),
-            
+
             rx.cond(
                 MainState.error,
                 rx.text(MainState.error, color="red"),

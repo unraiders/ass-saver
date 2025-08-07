@@ -10,13 +10,16 @@ class MainState(rx.State):
     image: str = ""
     watermark_text: str = ""
     result_image: str = ""
-    is_processing: bool = False
     error: str = ""
     font_size: int = 16  # Tamaño inicial de la fuente
     opacity: int = 125  # Valor inicial de opacidad (0-255)
     watermark_type: str = "Texto lineal"  # Tipo de disposición (lineal, cruzado)
     text_angle: int = 0  # Ángulo de rotación para texto lineal
     color_mode: str = "Actual"  # Modo de color (Actual o Escala de grises)
+
+    is_loading_file: bool = False  # Estado de carga del archivo
+
+    is_loading_watermark: bool = False # Estado proceso watermark
 
     async def load_test_file(self):
         """Carga el archivo de prueba dni_ficticio.jpg."""
@@ -53,7 +56,11 @@ class MainState(rx.State):
         """Maneja la subida de archivos."""
         if not files:
             return
-        
+
+        self.is_loading_file = True
+        # Aseguramos que el estado se actualice inmediatamente
+        yield
+
         try:
             file = files[0]
             # Convertir el objeto UploadFile a base64
@@ -76,18 +83,16 @@ class MainState(rx.State):
         except Exception as e:
             self.error = f"Error al procesar el archivo: {str(e)}"
             yield rx.toast.error("Error al cargar el archivo de prueba")
+        finally:
+            self.is_loading_file = False
 
     def set_font_size(self, size: list[int | float]):
         """Actualiza el tamaño de la fuente."""
         self.font_size = size[0]
-        # Limpiar la imagen procesada para forzar reprocesamiento
-        # self.result_image = ""
 
     def set_opacity(self, value: list[int | float]):
         """Actualiza la opacidad de la marca de agua."""
         self.opacity = int(value[0])
-        # Limpiar la imagen procesada para forzar reprocesamiento
-        # self.result_image = ""
         
     def set_watermark_text(self, value: str):
         """Actualiza el texto de la marca de agua."""
@@ -108,15 +113,18 @@ class MainState(rx.State):
         """Actualiza el modo de color de la imagen."""
         self.color_mode = value
     
-    def apply_watermark(self):
+    async def apply_watermark(self):
         """Aplica la marca de agua a la imagen."""
         if not self.image or not self.watermark_text:
             # self.error = "Por favor, sube una imagen y escribe un texto para la marca de agua."
             yield rx.toast.error("Por favor, sube una imagen y escribe un texto para la marca de agua.")
             return
 
+        self.is_loading_watermark = True
+        # Aseguramos que el estado se actualice inmediatamente
+        yield
+
         try:
-            self.is_processing = True
             # Extraer los datos base64 de la URL de datos y procesar la imagen
             image_data = self.image.split(',')[1]
             image_bytes = base64.b64decode(image_data)
@@ -157,7 +165,7 @@ class MainState(rx.State):
                 txt_template = Image.new('RGBA', (int(text_width*1.5), int(text_height*1.5)), (255, 255, 255, 0))
                 d = ImageDraw.Draw(txt_template)
                 d.text((text_width/4, text_height/4), self.watermark_text, 
-                      font=font, fill=(color_value, color_value, color_value, 255))
+                        font=font, fill=(color_value, color_value, color_value, 255))
                 txt_template = txt_template.rotate(angle, expand=True)
                 
                 # Ajustar el espaciado según el ángulo para evitar superposición
@@ -281,7 +289,7 @@ class MainState(rx.State):
         except Exception as e:
             self.error = f"Error al procesar la imagen: {str(e)}"
         finally:
-            self.is_processing = False
+            self.is_loading_watermark = False
 
     def reset_state(self):
         """Limpia el estado de la aplicación."""
@@ -289,5 +297,6 @@ class MainState(rx.State):
         self.watermark_text = ""
         self.result_image = ""
         self.error = ""
-        self.is_processing = False
         self.color_mode = "Actual"
+        self.is_loading_file = False
+        self.is_loading_watermark = False
