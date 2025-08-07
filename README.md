@@ -43,17 +43,37 @@ Si quieres exponer el contenedor para que sea accesible desde el exterior de tu 
 
 ```
 Define location:
+
 location: /_event
 Scheme: http
 Forward Hostname / IP: La IP dónde está instalado el contenedor.
 Forward Port: 25501
+
 En el campo de texto escribir lo siguiente:
+
 location /_event {
      proxy_pass http://<ip_contenedor>:25501;
      proxy_http_version 1.1;
      proxy_set_header Upgrade $http_upgrade;
      proxy_set_header Connection "upgrade";
 }
+
+Define location:
+
+location: /_upload
+Scheme: http
+Forward Hostname / IP: La IP dónde está instalado el contenedor.
+Forward Port: 25501
+
+En el campo de texto escribir lo siguiente:
+
+location /_upload {
+     proxy_pass http://192.168.6.19:25501;
+     proxy_http_version 1.1;
+     proxy_set_header Upgrade $http_upgrade;
+     proxy_set_header Connection "upgrade";
+}
+
 ```
 ---
 
