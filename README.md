@@ -2,19 +2,23 @@
 
 Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias.
 
-Está especialmente indicado para poner una marca de agua en nuestro documento nacional de identidad (DNI), cuando por alguna razón tenemos que enviarlo a terceros (altas, bajas, etc.) y queremos especificar el motivo de dicha gestión y que quede reflejado en el documento. 
+Está especialmente indicado para poner una marca de agua en nuestro documento nacional de identidad (DNI), cuando por alguna razón tenemos que enviarlo a terceros (altas, bajas, etc.) y queremos especificar el motivo de dicha gestión y que quede reflejado en el documento.
+
+Como una de las posibles finalidades del archivo generado sea la del envío mediante email cuando se aplica la marca de agua se hace un redimensionado proporcional automático de 800px. para disminuir al máximo el tamaño.
 
 ## Versión inicial.
 
 Este proyecto está en fase experimental pero funcional, posiblemente con la funcionalidad de texto lineal ya sea suficiente para un uso general y posiblemente no tengas más versiones ni cambios en el código.
 
-Que funciona:
+Que incluye:
 
 - Texto lineal en inclinación de 0º, 45º, 90º, 180º.
 
 - Opción de Modo de color: Actual o Escala de grises. 
 
 - Texto cruzado: El texto cruzado podría servir en determinadas ocasiones para texto que se pueda entrelazar.
+
+---
 
 La aplicación no guarda ningún dato en local, todo el proceso se realiza en memoria, lo que si nos permite es descargar el documento una vez insertada la marca de agua.
 
@@ -68,7 +72,7 @@ Forward Port: 25501
 En el campo de texto escribir lo siguiente:
 
 location /_upload {
-     proxy_pass http://192.168.6.19:25501;
+     proxy_pass http://<ip_contenedor>:25501;
      proxy_http_version 1.1;
      proxy_set_header Upgrade $http_upgrade;
      proxy_set_header Connection "upgrade";

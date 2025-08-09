@@ -242,7 +242,7 @@ class MainState(rx.State):
                         txt = Image.new('RGBA', (int(text_width*1.5), int(text_height*1.5)), (255, 255, 255, 0))
                         d = ImageDraw.Draw(txt)
                         d.text((text_width/4, text_height/4), self.watermark_text, 
-                              font=font, fill=(color_value, color_value, color_value, 255))
+                            font=font, fill=(color_value, color_value, color_value, 255))
                         
                         # Rotar el texto para seguir la tangente a la curva en ese punto
                         txt = txt.rotate(angle, expand=True)
@@ -271,7 +271,17 @@ class MainState(rx.State):
             # Convertir a RGB y guardar como PNG
             if background.mode != 'RGB':
                 background = background.convert('RGB')
+
+            # Redimensionar la imagen manteniendo la proporción
+            original_width, original_height = background.size
+            target_width = 800
+            ratio = original_width / target_width if original_width > target_width else 1
+            target_height = int(original_height / ratio)
             
+            # Solo redimensionar si es necesario (imagen mayor a 800px)
+            if ratio > 1:
+                background = background.resize((target_width, target_height), Image.LANCZOS)
+
             # Guardar la imagen
             buffered = io.BytesIO()
             background.save(buffered, format='PNG')

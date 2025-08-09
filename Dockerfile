@@ -1,7 +1,7 @@
 # Etapa de build
 FROM alpine:3.21.3 AS builder
 
-ARG VERSION=0.1.0
+ARG VERSION=0.2.0
 ARG PORT=25501
 ARG API_URL
 
