@@ -4,6 +4,7 @@ frontend/dist
 frontend/.vite
 
 # Python
+.venv/
 backend/.venv
 __pycache__/
 *.py[cod]

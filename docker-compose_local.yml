@@ -1,9 +1,14 @@
 services:
   ass-saver:
-    image: unraiders/ass-saver:latest
+    build:
+      context: .
+      args:
+        VERSION: "1.0.0"
+    image: unraiders/ass-saver
     container_name: ass-saver
     environment:
       - DEBUG=0
+      - VERSION=1.0.0
     ports:
       - "8000:8000"
     restart: unless-stopped
