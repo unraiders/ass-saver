@@ -175,7 +175,9 @@ def apply_watermark(
     ratio = original_width / TARGET_WIDTH if original_width > TARGET_WIDTH else 1
     if ratio > 1:
         target_height = int(original_height / ratio)
-        background = background.resize((TARGET_WIDTH, target_height), Image.LANCZOS)
+        background = background.resize(
+            (TARGET_WIDTH, target_height), Image.Resampling.LANCZOS
+        )
 
     buffered = io.BytesIO()
     background.save(buffered, format="PNG")

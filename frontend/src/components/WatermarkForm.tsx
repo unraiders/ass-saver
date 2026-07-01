@@ -13,6 +13,65 @@ import {
 } from "@/store/useAppStore";
 
 const ANGLES = [0, 45, 90, 180];
+const DOWNLOAD_NAME = "save-your-ass_watermarked.png";
+
+// Convierte una data-URL a Blob de forma síncrona (para no perder el gesto de
+// usuario que exige la Web Share API en iOS).
+function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+function isMobile(): boolean {
+  return /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+}
+
+// Descarga clásica por enlace (funciona en escritorio).
+function anchorDownload(blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = DOWNLOAD_NAME;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Guarda/descarga la imagen resultante según la plataforma:
+//  - Escritorio: descarga directa por enlace.
+//  - Móvil con Web Share (HTTPS): hoja nativa con "Guardar imagen".
+//  - Móvil sin Web Share (p. ej. HTTP en LAN): abre la imagen en otra pestaña
+//    para poder mantenerla pulsada y "Guardar en Fotos".
+function downloadResult(dataUrl: string) {
+  const blob = dataUrlToBlob(dataUrl);
+
+  if (!isMobile()) {
+    anchorDownload(blob);
+    return;
+  }
+
+  const file = new File([blob], DOWNLOAD_NAME, { type: blob.type });
+  const nav = navigator as Navigator & {
+    canShare?: (data: { files: File[] }) => boolean;
+    share?: (data: { files: File[]; title?: string }) => Promise<void>;
+  };
+
+  if (nav.canShare && nav.share && nav.canShare({ files: [file] })) {
+    nav.share({ files: [file], title: DOWNLOAD_NAME }).catch(() => {
+      /* el usuario canceló el diálogo de compartir */
+    });
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
 
 export function WatermarkForm() {
   const {
@@ -243,10 +302,8 @@ export function WatermarkForm() {
               alt="Resultado con marca de agua"
               className="max-h-80 rounded-md border"
             />
-            <Button asChild className="w-full">
-              <a href={resultImage} download="save-your-ass_watermarked.png">
-                Descargar Imagen
-              </a>
+            <Button className="w-full" onClick={() => downloadResult(resultImage)}>
+              Descargar Imagen
             </Button>
           </div>
         )}
