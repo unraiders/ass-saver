@@ -1,0 +1,13 @@
+# Node
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Python
+backend/.venv
+__pycache__/
+*.py[cod]
+backend/.pytest_cache
+
+# Sistema
+.DS_Store

@@ -1,0 +1,22 @@
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Backend
+backend/.venv
+backend/**/__pycache__
+backend/**/*.pyc
+backend/.pytest_cache
+
+# Varios (no necesarios dentro de la imagen)
+.git
+.gitignore
+.github
+.dockerignore
+.version_main
+.version_develop
+docker-compose.yml
+.DS_Store
+*.md
+imagenes

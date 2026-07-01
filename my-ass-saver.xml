@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>ass-saver</Name>
+  <Repository>unraiders/ass-saver:latest</Repository>
+  <Registry>https://hub.docker.com/r/unraiders/ass-saver/</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/unraiders/ass-saver/releases</Support>
+  <Project>https://github.com/unraiders/ass-saver</Project>
+  <Icon>https://raw.githubusercontent.com/unraiders/ass-saver/main/frontend/public/ass-saver-logo.png</Icon>
+  <Overview>
+    Inserta una marca de agua con tu texto en tus imágenes .png o .jpg para proteger tus documentos al realizar gestiones varias. Especialmente indicado para poner una marca de agua en tu DNI cuando tienes que enviarlo a terceros. Todo el proceso se realiza en memoria y la imagen se redimensiona proporcionalmente a 800px para reducir su tamaño.
+  </Overview>
+  <WebUI>http://[IP]:[PORT:8000]</WebUI>
+  <Category>Tools:</Category>
+  <Config Name="WebUI" Target="8000" Default="8000" Mode="tcp" Description="Puerto de la interfaz web de ASS-SAVER." Type="Port" Display="always" Required="true" Mask="false">8000</Config>
+  <Config Name="DEBUG" Target="DEBUG" Default="0" Mode="" Description="Habilita el modo Debug en el log. (0 = No / 1 = Si)" Type="Variable" Display="always" Required="false" Mask="false">0</Config>
+</Container>

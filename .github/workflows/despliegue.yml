@@ -1,0 +1,149 @@
+name: Despliegue Release & Push (DockerHub + GHCR)
+
+on:
+  push:
+    branches:
+      - "main"
+      - "develop"
+  workflow_dispatch:
+    inputs:
+      manual_notes:
+        description: "Notas personalizadas para el Release (Opcional)"
+        required: false
+        default: ""
+
+# Permisos restringidos
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      # 1. Identificar la rama actual
+      - name: Get Branch Name
+        id: branch_name
+        run: echo "branch=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+
+      # 2. Convertir nombre de repo a minúsculas
+      - name: Lowercase Repo Name
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      # 3. Leer versión desde el archivo de la rama
+      - name: Read version from branch file
+        id: get_version
+        run: |
+          BRANCH="${GITHUB_REF##*/}"
+          case "$BRANCH" in
+            main) FILE=".version_main" ;;
+            develop) FILE=".version_develop" ;;
+            *) FILE=".${BRANCH}_version" ;;
+          esac
+          BASE_VERSION=$(cat "$FILE" | tr -d ' \t\n\r')
+          echo "base_version=$BASE_VERSION" >> $GITHUB_OUTPUT
+
+      # 4. Calcular versión final y Tags según la rama
+      - name: Determine Tags and Suffixes
+        id: meta
+        run: |
+          BRANCH="${{ steps.branch_name.outputs.branch }}"
+          BASE="${{ steps.get_version.outputs.base_version }}"
+
+          if [ "$BRANCH" == "main" ]; then
+            echo "final_version=$BASE" >> $GITHUB_OUTPUT
+            echo "docker_tag=latest" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" == "develop" ]; then
+            echo "final_version=$BASE-develop" >> $GITHUB_OUTPUT
+            echo "docker_tag=develop" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "final_version=$BASE-$BRANCH" >> $GITHUB_OUTPUT
+            echo "docker_tag=$BRANCH" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
+      # 5. Obtener notas del Release
+      - name: Get Release Description
+        id: get_release_notes
+        run: |
+          if [[ "${{ inputs.manual_notes }}" != "" ]]; then
+             RELEASE_NOTES="${{ inputs.manual_notes }}"
+          elif [ -f RELEASE.md ]; then
+            RELEASE_NOTES=$(cat RELEASE.md)
+          else
+            RELEASE_NOTES="$(git log -1 --pretty=%B)"
+          fi
+
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "Branch: ${{ steps.branch_name.outputs.branch }}" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # 6. Crear Git Tag
+      - name: Create Git Tag
+        continue-on-error: true
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          TAG_NAME="v${{ steps.meta.outputs.final_version }}"
+
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists. Skipping creation."
+          else
+            git tag $TAG_NAME
+            git push origin $TAG_NAME
+          fi
+
+      # 7. Crear Release en GitHub
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.meta.outputs.final_version }}
+          name: Release v${{ steps.meta.outputs.final_version }}
+          body: ${{ steps.get_release_notes.outputs.release_notes }}
+          draft: false
+          prerelease: ${{ steps.meta.outputs.is_prerelease }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+
+      # --- LOGINS ---
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          # GITHUB_TOKEN automático: tiene packages:write (ver permisos arriba),
+          # así no depende del scope del GH_PAT personal.
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 8. Build y Push (multiarch)
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            VERSION=${{ steps.meta.outputs.final_version }}
+          tags: |
+            unraiders/ass-saver:${{ steps.meta.outputs.final_version }}
+            unraiders/ass-saver:${{ steps.meta.outputs.docker_tag }}
+            ghcr.io/${{ env.REPO_LOWER }}:${{ steps.meta.outputs.final_version }}
+            ghcr.io/${{ env.REPO_LOWER }}:${{ steps.meta.outputs.docker_tag }}
