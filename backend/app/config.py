@@ -2,7 +2,6 @@
 import os
 
 VERSION = os.getenv("VERSION", "dev")
-DEBUG = int(os.getenv("DEBUG", "0"))
 STATIC_DIR = os.getenv("STATIC_DIR", os.path.join(os.path.dirname(__file__), "static"))
 FONT_PATH = os.getenv(
     "FONT_PATH",

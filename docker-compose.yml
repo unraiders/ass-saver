@@ -2,8 +2,6 @@ services:
   ass-saver:
     image: unraiders/ass-saver:latest
     container_name: ass-saver
-    environment:
-      - DEBUG=0
     ports:
       - "8000:8000"
     restart: unless-stopped

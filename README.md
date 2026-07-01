@@ -22,12 +22,6 @@ Como una de las posibles finalidades del archivo generado es el envío por email
 - **Backend**: FastAPI (procesa la imagen con Pillow).
 - **Empaquetado**: una única imagen Docker en la que el backend sirve tanto la API como la interfaz web compilada.
 
-## Configuración: variables de entorno
-
-| Variable | Necesaria | Valor por defecto | Descripción |
-|----------|-----------|-------------------|-------------|
-| `DEBUG`  | No        | `0`               | Habilita el modo Debug en el log. (`0` = No / `1` = Sí) |
-
 ## Ejemplo `docker-compose.yml`
 
 ```yaml
@@ -35,8 +29,6 @@ services:
   ass-saver:
     image: unraiders/ass-saver:latest
     container_name: ass-saver
-    environment:
-      - DEBUG=0
     ports:
       - "8000:8000"
     restart: unless-stopped
