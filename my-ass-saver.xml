@@ -15,5 +15,4 @@
   <WebUI>http://[IP]:[PORT:8000]</WebUI>
   <Category>Tools:</Category>
   <Config Name="WebUI" Target="8000" Default="8000" Mode="tcp" Description="Puerto de la interfaz web de ASS-SAVER." Type="Port" Display="always" Required="true" Mask="false">8000</Config>
-  <Config Name="DEBUG" Target="DEBUG" Default="0" Mode="" Description="Habilita el modo Debug en el log. (0 = No / 1 = Si)" Type="Variable" Display="always" Required="false" Mask="false">0</Config>
 </Container>

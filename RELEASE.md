@@ -1,9 +1,7 @@
 # Cambios en esta versión
 
-## 🚀 Primera versión con el nuevo stack
+## 🧹 Limpieza: eliminada la variable `DEBUG`
 
-- **Reescritura completa** de la aplicación: frontend en React + Vite + TypeScript + Tailwind + shadcn/ui y backend en FastAPI.
-- **Una sola imagen Docker**: el backend sirve tanto la API como la interfaz web compilada.
-- **Publicación en DockerHub y GHCR** con builds automatizados.
-- **Puerto configurable** (por defecto 8000), mapeable libremente al host.
-- Se mantiene toda la funcionalidad de marca de agua: texto lineal (0°, 45°, 90°, 180°), texto cruzado, escala de grises, opacidad y tamaño de fuente ajustables, con redimensionado proporcional a 800px.
+- **Retirada la variable de entorno `DEBUG`** de todo el proyecto (backend, `docker-compose`, plantilla de Unraid y documentación).
+- El logger queda fijo en nivel `INFO`.
+- Eliminado código muerto: `DEBUG` estaba definida en `config.py` pero no se usaba en ningún sitio.
