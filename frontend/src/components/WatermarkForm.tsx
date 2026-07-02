@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,70 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useAppStore,
+  FONT_GROUPS,
   type ColorMode,
+  type FontFamily,
+  type Position,
   type WatermarkType,
 } from "@/store/useAppStore";
 
-const ANGLES = [0, 45, 90, 180];
 const DOWNLOAD_NAME = "save-your-ass_watermarked.png";
+
+// Celdas de la rejilla 3×3: 5 posiciones seleccionables y 4 huecos vacíos.
+const POSITION_CELLS: (Position | null)[] = [
+  "top-left",
+  null,
+  "top-right",
+  null,
+  "center",
+  null,
+  "bottom-left",
+  null,
+  "bottom-right",
+];
+
+// Selector visual de posición (esquinas o centro) sobre una rejilla 3×3.
+function PositionPicker({
+  value,
+  onChange,
+}: {
+  value: Position;
+  onChange: (v: Position) => void;
+}) {
+  return (
+    <div className="grid w-[84px] grid-cols-3 gap-1">
+      {POSITION_CELLS.map((cell, i) =>
+        cell ? (
+          <button
+            key={i}
+            type="button"
+            aria-label={cell}
+            onClick={() => onChange(cell)}
+            className={`flex h-6 w-6 items-center justify-center rounded border text-[10px] transition-colors ${
+              value === cell
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input hover:bg-accent"
+            }`}
+          >
+            ●
+          </button>
+        ) : (
+          <div key={i} className="h-6 w-6" />
+        )
+      )}
+    </div>
+  );
+}
 
 // Convierte una data-URL a Blob de forma síncrona (para no perder el gesto de
 // usuario que exige la Web Share API en iOS).
@@ -83,6 +140,14 @@ export function WatermarkForm() {
     watermarkType,
     textAngle,
     colorMode,
+    color,
+    fontFamily,
+    logo,
+    logoScale,
+    logoOpacity,
+    logoPosition,
+    addDate,
+    stampPosition,
     isLoadingFile,
     isLoadingWatermark,
     setWatermarkText,
@@ -91,13 +156,23 @@ export function WatermarkForm() {
     setWatermarkType,
     setTextAngle,
     setColorMode,
+    setColor,
+    setFontFamily,
+    setLogoScale,
+    setLogoOpacity,
+    setLogoPosition,
+    setAddDate,
+    setStampPosition,
+    clearLogo,
     handleFile,
+    handleLogoFile,
     loadTestFile,
     applyWatermark,
     reset,
   } = useAppStore();
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
   const onDrop = useCallback(
@@ -223,6 +298,49 @@ export function WatermarkForm() {
           />
         </div>
 
+        {/* Color del texto */}
+        <div className="space-y-2">
+          <Label htmlFor="wm-color">Color del texto:</Label>
+          <div className="flex items-center gap-3">
+            <input
+              id="wm-color"
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-9 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
+            />
+            <span className="text-sm text-muted-foreground">{color}</span>
+          </div>
+          <p className="text-xs font-light text-muted-foreground">
+            En modo "Escala de grises" el color se convierte a gris al final.
+          </p>
+        </div>
+
+        {/* Fuente */}
+        <div className="space-y-2">
+          <Label htmlFor="wm-font">Fuente:</Label>
+          <Select
+            value={fontFamily}
+            onValueChange={(v) => setFontFamily(v as FontFamily)}
+          >
+            <SelectTrigger id="wm-font">
+              <SelectValue placeholder="Elige una fuente" />
+            </SelectTrigger>
+            <SelectContent>
+              {FONT_GROUPS.map((group) => (
+                <SelectGroup key={group.label}>
+                  <SelectLabel>{group.label}</SelectLabel>
+                  {group.fonts.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {f}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Modo de color */}
         <div className="space-y-2">
           <Label>Modo de color:</Label>
@@ -261,28 +379,109 @@ export function WatermarkForm() {
 
         {/* Inclinación (solo texto lineal) */}
         <div className={`space-y-2 ${angleDisabled ? "opacity-50" : ""}`}>
-          <Label>Inclinación del texto:</Label>
-          <RadioGroup
-            value={String(textAngle)}
-            onValueChange={(v) => setTextAngle(Number(v))}
+          <Label>Inclinación del texto: {textAngle}°</Label>
+          <Slider
+            min={0}
+            max={360}
+            step={5}
+            value={[textAngle]}
+            onValueChange={(v) => setTextAngle(v[0])}
             disabled={angleDisabled}
-            className="flex gap-4"
-          >
-            {ANGLES.map((a) => (
-              <div key={a} className="flex items-center gap-2">
-                <RadioGroupItem value={String(a)} id={`angle-${a}`} />
-                <Label htmlFor={`angle-${a}`} className="font-normal">
-                  {a}°
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+          />
         </div>
+
+        {/* Logo opcional */}
+        <div className="space-y-2">
+          <Label>Logo (opcional):</Label>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleLogoFile(file);
+              e.target.value = "";
+            }}
+          />
+          {logo ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={logo}
+                alt="Logo"
+                className="h-12 w-12 rounded border object-contain"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => clearLogo()}
+              >
+                <X className="h-4 w-4" /> Quitar
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logoInputRef.current?.click()}
+            >
+              <Upload className="h-4 w-4" /> Añadir logo
+            </Button>
+          )}
+          {logo && (
+            <div className="space-y-3 pt-1">
+              <div className="space-y-2">
+                <Label>Tamaño del logo: {logoScale}%</Label>
+                <Slider
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={[logoScale]}
+                  onValueChange={(v) => setLogoScale(v[0])}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Opacidad del logo: {logoOpacity}</Label>
+                <Slider
+                  min={0}
+                  max={255}
+                  step={5}
+                  value={[logoOpacity]}
+                  onValueChange={(v) => setLogoOpacity(v[0])}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Posición del logo:</Label>
+                <PositionPicker value={logoPosition} onChange={setLogoPosition} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sello de fecha */}
+        <div className="flex items-center gap-2">
+          <input
+            id="wm-date"
+            type="checkbox"
+            checked={addDate}
+            onChange={(e) => setAddDate(e.target.checked)}
+            className="h-4 w-4 cursor-pointer accent-primary"
+          />
+          <Label htmlFor="wm-date" className="font-normal">
+            Añadir la fecha de hoy en una esquina
+          </Label>
+        </div>
+        {addDate && (
+          <div className="space-y-2">
+            <Label>Posición de la fecha:</Label>
+            <PositionPicker value={stampPosition} onChange={setStampPosition} />
+          </div>
+        )}
 
         {/* Aplicar */}
         <Button
           className="w-full"
-          onClick={applyWatermark}
+          onClick={() => applyWatermark()}
           disabled={isLoadingWatermark}
         >
           {isLoadingWatermark ? (

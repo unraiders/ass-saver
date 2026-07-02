@@ -21,6 +21,14 @@ export interface WatermarkPayload {
   watermark_type: string;
   text_angle: number;
   color_mode: string;
+  color: string;
+  font_family: string;
+  logo: string;
+  logo_scale: number;
+  logo_opacity: number;
+  logo_position: string;
+  stamp_text: string;
+  stamp_position: string;
 }
 
 export interface WatermarkResponse {

@@ -34,6 +34,13 @@ def watermark(req: WatermarkRequest) -> WatermarkResponse:
     except (binascii.Error, ValueError):
         return WatermarkResponse(success=False, message="La imagen recibida no es válida.")
 
+    logo_bytes: bytes | None = None
+    if req.logo:
+        try:
+            logo_bytes = _decode_image(req.logo)
+        except (binascii.Error, ValueError):
+            return WatermarkResponse(success=False, message="El logo recibido no es válido.")
+
     try:
         result_bytes = apply_watermark(
             image_bytes,
@@ -43,6 +50,14 @@ def watermark(req: WatermarkRequest) -> WatermarkResponse:
             watermark_type=req.watermark_type,
             text_angle=req.text_angle,
             color_mode=req.color_mode,
+            color=req.color,
+            font_family=req.font_family,
+            logo_bytes=logo_bytes,
+            logo_scale=req.logo_scale,
+            logo_opacity=req.logo_opacity,
+            logo_position=req.logo_position,
+            stamp_text=req.stamp_text,
+            stamp_position=req.stamp_position,
         )
     except Exception as exc:  # noqa: BLE001 - se reporta al cliente
         logger.exception("Error al procesar la imagen")

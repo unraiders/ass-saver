@@ -10,6 +10,7 @@ Escala de grises) y redimensionado proporcional a 800px de ancho.
 """
 import io
 import math
+import os
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -21,13 +22,106 @@ logger = setup_logger(__name__)
 TARGET_WIDTH = 800
 
 
-def _load_font(font_size: int) -> ImageFont.FreeTypeFont:
-    """Carga la fuente incluida en el proyecto; usa la de por defecto si falla."""
+def _load_font(font_size: int, font_family: str = config.DEFAULT_FONT_FAMILY):
+    """Carga una fuente de la lista blanca; cae a la de por defecto si falla.
+
+    `font_family` es un nombre lógico (clave de `config.FONTS`), no una ruta:
+    se resuelve siempre dentro de `config.FONTS_DIR` para evitar path traversal.
+    """
+    filename = config.FONTS.get(font_family)
+    if filename is None:
+        logger.warning("Fuente desconocida '%s'; se usa la de por defecto", font_family)
+        filename = config.FONTS[config.DEFAULT_FONT_FAMILY]
+
+    font_path = os.path.join(config.FONTS_DIR, filename)
     try:
-        return ImageFont.truetype(config.FONT_PATH, int(font_size))
+        return ImageFont.truetype(font_path, int(font_size))
     except Exception as exc:  # pragma: no cover - depende del entorno
-        logger.warning("No se pudo cargar la fuente %s: %s", config.FONT_PATH, exc)
+        logger.warning("No se pudo cargar la fuente %s: %s", font_path, exc)
         return ImageFont.load_default()
+
+
+def _text_tile(font, text: str, fill: tuple[int, int, int, int]) -> Image.Image:
+    """Crea un lienzo RGBA ajustado al texto, con el texto dibujado sin recortes.
+
+    Dimensiona el lienzo a partir del bounding box real del texto (que puede tener
+    origen negativo según la fuente) y dibuja compensando ese origen más un padding,
+    de modo que ninguna fuente quede cortada por sus ascendentes o descendentes.
+    """
+    measure = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    left, top, right, bottom = measure.textbbox((0, 0), text, font=font)
+    pad = max(4, (bottom - top) // 2)
+    tile = Image.new(
+        "RGBA", (right - left + 2 * pad, bottom - top + 2 * pad), (255, 255, 255, 0)
+    )
+    ImageDraw.Draw(tile).text((pad - left, pad - top), text, font=font, fill=fill)
+    return tile
+
+
+def _parse_hex(color: str) -> tuple[int, int, int]:
+    """Convierte un color '#rrggbb' (o 'rrggbb') a una tupla RGB.
+
+    Ante un valor inválido devuelve gris medio, para no romper el procesado.
+    """
+    value = color.lstrip("#")
+    try:
+        if len(value) == 3:  # formato corto '#abc'
+            value = "".join(c * 2 for c in value)
+        r = int(value[0:2], 16)
+        g = int(value[2:4], 16)
+        b = int(value[4:6], 16)
+        return r, g, b
+    except (ValueError, IndexError):
+        logger.warning("Color inválido '%s'; se usa gris medio", color)
+        return 128, 128, 128
+
+
+def _paste_logo(
+    base: Image.Image,
+    logo_bytes: bytes,
+    *,
+    scale: int,
+    opacity: int,
+    position: str = "center",
+) -> None:
+    """Compone un logo sobre `base` (modo RGBA), in situ.
+
+    `scale` es el ancho del logo como % del ancho de la imagen; `opacity` (0-255)
+    modula su transparencia; `position` es una de las claves de `_anchor`.
+    """
+    logo = Image.open(io.BytesIO(logo_bytes)).convert("RGBA")
+
+    scale = max(1, min(int(scale), 100))
+    target_w = max(1, int(base.width * scale / 100))
+    ratio = target_w / logo.width
+    target_h = max(1, int(logo.height * ratio))
+    logo = logo.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+    # Modular el canal alfa por la opacidad indicada.
+    alpha = logo.split()[3].point(lambda a: int(a * max(0, min(opacity, 255)) / 255))
+    logo.putalpha(alpha)
+
+    margin = max(8, int(base.width * 0.02))
+    pos = _anchor(position, base.width, base.height, logo.width, logo.height, margin)
+    base.paste(logo, pos, logo)
+
+
+def _anchor(
+    position: str, cw: int, ch: int, ew: int, eh: int, margin: int
+) -> tuple[int, int]:
+    """Calcula la esquina superior-izquierda para colocar un elemento de tamaño
+    (ew, eh) dentro de un contenedor (cw, ch) según `position`.
+
+    Posiciones válidas: 'center' y las cuatro esquinas
+    'top-left' / 'top-right' / 'bottom-left' / 'bottom-right'.
+    Ante un valor desconocido usa el centro.
+    """
+    if position == "center" or "-" not in position:
+        return (cw - ew) // 2, (ch - eh) // 2
+    vert, _, horiz = position.partition("-")
+    x = margin if horiz == "left" else cw - ew - margin
+    y = margin if vert == "top" else ch - eh - margin
+    return x, y
 
 
 def apply_watermark(
@@ -39,6 +133,14 @@ def apply_watermark(
     watermark_type: str = "Texto lineal",
     text_angle: int = 0,
     color_mode: str = "Actual",
+    color: str = "#808080",
+    font_family: str = config.DEFAULT_FONT_FAMILY,
+    logo_bytes: bytes | None = None,
+    logo_scale: int = 25,
+    logo_opacity: int = 128,
+    logo_position: str = "center",
+    stamp_text: str = "",
+    stamp_position: str = "bottom-right",
 ) -> bytes:
     """Aplica la marca de agua y devuelve los bytes de un PNG."""
     image = Image.open(io.BytesIO(image_bytes))
@@ -48,7 +150,7 @@ def apply_watermark(
         image = image.convert("RGBA")
 
     draw = ImageDraw.Draw(image)
-    font = _load_font(font_size)
+    font = _load_font(font_size, font_family)
 
     bbox = draw.textbbox((0, 0), text, font=font)
     text_width = bbox[2] - bbox[0]
@@ -59,21 +161,16 @@ def apply_watermark(
     spacing_y = text_height * 2  # Espaciado vertical
     rows = int(image.height / spacing_y) + 2
     cols = int(image.width / spacing_x) + 2
-    color_value = 255 - opacity
+
+    # Color del texto (RGB elegido) y alfa real controlado por la opacidad.
+    r, g, b = _parse_hex(color)
+    alpha = max(0, min(int(opacity), 255))
+    text_fill = (r, g, b, alpha)
 
     if watermark_type == "Texto lineal":
         # Crear patrón lineal
         angle = text_angle
-        txt_template = Image.new(
-            "RGBA", (int(text_width * 1.5), int(text_height * 1.5)), (255, 255, 255, 0)
-        )
-        d = ImageDraw.Draw(txt_template)
-        d.text(
-            (text_width / 4, text_height / 4),
-            text,
-            font=font,
-            fill=(color_value, color_value, color_value, 255),
-        )
+        txt_template = _text_tile(font, text, text_fill)
         txt_template = txt_template.rotate(angle, expand=True)
 
         # Ajustar el espaciado según el ángulo para evitar superposición
@@ -137,24 +234,41 @@ def apply_watermark(
                 )
                 angle = math.degrees(math.atan(derivative))
 
-                txt = Image.new(
-                    "RGBA",
-                    (int(text_width * 1.5), int(text_height * 1.5)),
-                    (255, 255, 255, 0),
-                )
-                d = ImageDraw.Draw(txt)
-                d.text(
-                    (text_width / 4, text_height / 4),
-                    text,
-                    font=font,
-                    fill=(color_value, color_value, color_value, 255),
-                )
+                txt = _text_tile(font, text, text_fill)
                 txt = txt.rotate(angle, expand=True)
 
                 paste_x = int(x_pos)
                 paste_y = int(wave_y)
                 if 0 <= paste_x < image.width and 0 <= paste_y < image.height:
                     image.paste(txt, (paste_x, paste_y), txt)
+
+    # Logo opcional, en la posición elegida sobre el patrón de texto.
+    if logo_bytes:
+        try:
+            _paste_logo(
+                image,
+                logo_bytes,
+                scale=logo_scale,
+                opacity=logo_opacity,
+                position=logo_position,
+            )
+        except Exception as exc:  # noqa: BLE001 - un logo inválido no debe romper todo
+            logger.warning("No se pudo componer el logo: %s", exc)
+
+    # Sello opcional (p. ej. fecha) en la posición elegida. Se dibuja en su propio
+    # tile (con `_text_tile`, que evita recortes) y se pega en la posición anclada.
+    if stamp_text.strip():
+        stamp_tile = _text_tile(font, stamp_text, text_fill)
+        margin = max(8, int(image.width * 0.02))
+        pos = _anchor(
+            stamp_position,
+            image.width,
+            image.height,
+            stamp_tile.width,
+            stamp_tile.height,
+            margin,
+        )
+        image.paste(stamp_tile, pos, stamp_tile)
 
     # Aplanar sobre un fondo blanco.
     background = Image.new("RGB", image.size, (255, 255, 255))
