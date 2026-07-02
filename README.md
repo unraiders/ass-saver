@@ -10,10 +10,16 @@ Como una de las posibles finalidades del archivo generado es el envío por email
 
 ## ¿Qué hace?
 
-- **Texto lineal** con inclinación de 0°, 45°, 90° o 180°.
+- **Vista previa en vivo**: el resultado se actualiza solo al cambiar cualquier ajuste.
+- **Texto lineal** con **inclinación libre de 0° a 360°**.
 - **Texto cruzado**: el texto sigue una onda para entrelazarse sobre la imagen.
+- **Color del texto** personalizable y **opacidad** real (alfa) ajustable.
+- **Fuente** seleccionable entre varias, agrupadas por estilo (sans serif, con serifa, monoespaciada e impacto). Por defecto **DejaVu Sans Mono**.
 - **Modo de color**: Actual o Escala de grises.
-- **Opacidad** y **tamaño de fuente** ajustables.
+- **Tamaño de fuente** ajustable.
+- **Logo opcional** superpuesto, con tamaño, opacidad y posición configurables.
+- **Sello de fecha** automático, con posición configurable.
+- **Posición** del logo y del sello: cuatro esquinas o centro.
 - **Redimensionado** proporcional automático a 800px de ancho.
 
 ## Stack
@@ -72,5 +78,6 @@ El frontend de desarrollo levanta en `http://localhost:3000` y hace proxy de `/a
 
 1. Sube una imagen (`.png` / `.jpg`) o pulsa **Cargar fichero de prueba**.
 2. Escribe el texto de la marca de agua (por ejemplo: *SOLO VÁLIDO PARA DAR DE BAJA…*).
-3. Ajusta tamaño de fuente, opacidad, modo de color y disposición (lineal o cruzado). En modo lineal puedes elegir la inclinación.
-4. Pulsa **Aplicar Marca de Agua** y descarga el resultado.
+3. Ajusta tamaño de fuente, color, opacidad, fuente, modo de color y disposición (lineal o cruzado). En modo lineal puedes elegir la inclinación (0–360°).
+4. Opcionalmente, añade un **logo** (con tamaño, opacidad y posición) y/o un **sello de fecha** en la esquina o centro que prefieras.
+5. La **vista previa se actualiza automáticamente**; pulsa **Aplicar Marca de Agua** para forzar el procesado y descarga el resultado.
